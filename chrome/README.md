@@ -30,7 +30,7 @@ Open the Chrome side panel for the main settings UI. It uses a white + dark-blue
 
 The old options page still exists as a quick fallback for accuracy range only.
 
-The sidebar bundles Kanit locally in `fonts/`, so the panel uses it even when the system font is missing.
+The side panel bundles Kanit locally in `fonts/`, so the panel uses it even when the system font is missing. The UI now uses lighter Kanit weights for a softer dashboard look.
 
 Accuracy is picked once per page-hook run. Latitude/longitude is always picked once inside the received radius when a valid radius is available. Later geolocation calls reuse the same values.
 
