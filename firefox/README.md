@@ -1,25 +1,23 @@
 # flux-ubusac
 
-Firefox Manifest V2 add-on that overrides geolocation on the UBU registration prompt and updates the returned position when the page logs coordinates.
+Firefox Manifest V2 add-on that overrides geolocation on the UBU registration prompt and derives the returned position from the page map/register state.
 
 ## Target
 
 `https://dev.ubu.ac.th/`
 
-Coordinates:
+The page hook scans Nuxt/Vue state for:
 
-```json
-{
-  "lat": 15.114926007239427,
-  "lng": 104.90221112966539
-}
-```
+- Leaflet circle center and radius
+- `department_latitude`, `department_longitude`, `gps_radius`
+- a `title` row whose `r_rand` matches the current `?rand=` query
+- logged coordinate strings or objects as a fallback
 
 ## Options
 
 Open the extension options to configure the random integer `coords.accuracy` range. Defaults are `0` to `10`.
 
-Latitude and longitude are not randomized.
+Accuracy is picked once per page-hook run. Latitude/longitude is always picked once inside the received radius when a valid radius is available. Later geolocation calls reuse the same values.
 
 ## Load Temporarily
 

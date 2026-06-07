@@ -1,20 +1,55 @@
 (function () {
   "use strict";
 
-  const position = {
-    lat: 15.114926007239427,
-    lng: 104.90221112966539
-  };
+  const stateKey = "__fluxUbusacConsoleApplied";
 
+  if (window[stateKey]) {
+    console.info("[flux-ubusac] page hook already applied");
+    return;
+  }
+
+  window[stateKey] = true;
+
+  const targetOrigin = "https://dev.ubu.ac.th";
+  const scanIntervalMs = 250;
+  const scanTimeoutMs = 10000;
   const config = {
     accuracyMin: 0,
-    accuracyMax: 10
+    accuracyMax: 10,
+    randomLocationInRange: true
+  };
+
+  const originalConsole = {
+    debug: console.debug,
+    info: console.info,
+    log: console.log,
+    warn: console.warn
+  };
+
+  const position = {
+    lat: null,
+    lng: null,
+    radius: null,
+    source: null,
+    accuracy: randomAccuracy()
   };
 
   let overridden = false;
-  let coordinatesLocked = false;
+  let scanTimer = null;
+  let scanStartedAt = 0;
   let watchId = 0;
   const watchers = new Map();
+  const pendingSuccesses = new Set();
+  let pendingPageCoords = null;
+  let pendingConsoleCoords = null;
+  let pendingConsoleTimer = null;
+
+  if (window.location.origin !== targetOrigin) {
+    originalConsole.warn("[flux-ubusac] current page is not the configured target origin", {
+      current: window.location.origin,
+      target: targetOrigin
+    });
+  }
 
   function normalizeConfig(nextConfig) {
     const min = Math.trunc(Number(nextConfig && nextConfig.accuracyMin));
@@ -22,6 +57,7 @@
 
     config.accuracyMin = Number.isFinite(min) ? Math.max(0, min) : 0;
     config.accuracyMax = Number.isFinite(max) ? Math.max(0, max) : 10;
+    config.randomLocationInRange = true;
 
     if (config.accuracyMin > config.accuracyMax) {
       const previousMin = config.accuracyMin;
@@ -34,12 +70,16 @@
     return Math.floor(Math.random() * (config.accuracyMax - config.accuracyMin + 1)) + config.accuracyMin;
   }
 
+  function hasPosition() {
+    return Number.isFinite(position.lat) && Number.isFinite(position.lng);
+  }
+
   function createPosition() {
     return {
       coords: {
         latitude: position.lat,
         longitude: position.lng,
-        accuracy: randomAccuracy(),
+        accuracy: position.accuracy,
         altitude: null,
         altitudeAccuracy: null,
         heading: null,
@@ -49,47 +89,39 @@
     };
   }
 
-  function parseCoords(value, depth) {
-    if (depth > 4 || value == null) {
-      return null;
-    }
-
-    if (typeof value === "string") {
-      const match = value.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
-
-      if (!match) {
-        return null;
-      }
-
-      return normalizeCoords(match[1], match[2]);
-    }
-
-    if (typeof value !== "object") {
-      return null;
-    }
-
-    if ("lat" in value && "lng" in value) {
-      const coords = normalizeCoords(value.lat, value.lng);
-
-      if (coords) {
-        return coords;
-      }
-    }
-
-    for (const key of Object.keys(value)) {
-      const coords = parseCoords(value[key], depth + 1);
-
-      if (coords) {
-        return coords;
-      }
-    }
-
-    return null;
+  function getRand() {
+    return new URLSearchParams(window.location.search).get("rand");
   }
 
-  function normalizeCoords(lat, lng) {
-    const nextLat = Number(lat);
-    const nextLng = Number(lng);
+  function numberFromRequired(value) {
+    if (value == null || value === "") {
+      return NaN;
+    }
+
+    if (typeof value === "string" && value.trim() === "") {
+      return NaN;
+    }
+
+    return Number(value);
+  }
+
+  function numberFromOptional(value) {
+    if (value == null || value === "") {
+      return null;
+    }
+
+    if (typeof value === "string" && value.trim() === "") {
+      return null;
+    }
+
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  }
+
+  function normalizeCoords(lat, lng, radius) {
+    const nextLat = numberFromRequired(lat);
+    const nextLng = numberFromRequired(lng);
+    const nextRadius = numberFromOptional(radius);
 
     if (!Number.isFinite(nextLat) || !Number.isFinite(nextLng)) {
       return null;
@@ -101,24 +133,124 @@
 
     return {
       lat: nextLat,
-      lng: nextLng
+      lng: nextLng,
+      radius: nextRadius
     };
   }
 
-  function updatePosition(coords) {
-    if (!coords || coordinatesLocked) {
-      return;
+  function randomPointInRadius(coords) {
+    if (!config.randomLocationInRange || !coords || !Number.isFinite(coords.radius) || coords.radius <= 0) {
+      return coords;
     }
 
-    coordinatesLocked = true;
-    position.lat = coords.lat;
-    position.lng = coords.lng;
+    const earthRadius = 6378137;
+    const distance = Math.sqrt(Math.random()) * coords.radius;
+    const bearing = Math.random() * Math.PI * 2;
+    const angularDistance = distance / earthRadius;
+    const lat1 = coords.lat * Math.PI / 180;
+    const lng1 = coords.lng * Math.PI / 180;
 
-    console.info("[flux-ubusac] location updated", coords);
+    const lat2 = Math.asin(
+      Math.sin(lat1) * Math.cos(angularDistance) +
+      Math.cos(lat1) * Math.sin(angularDistance) * Math.cos(bearing)
+    );
 
-    for (const success of watchers.values()) {
-      callSuccess(success);
+    const lng2 = lng1 + Math.atan2(
+      Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(lat1),
+      Math.cos(angularDistance) - Math.sin(lat1) * Math.sin(lat2)
+    );
+
+    return {
+      lat: lat2 * 180 / Math.PI,
+      lng: ((lng2 * 180 / Math.PI + 540) % 360) - 180,
+      radius: coords.radius,
+      distanceFromCenter: distance,
+      centerLat: coords.lat,
+      centerLng: coords.lng
+    };
+  }
+
+  function coordsFromObject(value) {
+    if (!value || typeof value !== "object") {
+      return null;
     }
+
+    if ("lat" in value && "lng" in value) {
+      return normalizeCoords(value.lat, value.lng, value.gps_radius ?? value.radius);
+    }
+
+    if ("latitude" in value && "longitude" in value) {
+      return normalizeCoords(value.latitude, value.longitude, value.gps_radius ?? value.radius);
+    }
+
+    if ("department_latitude" in value && "department_longitude" in value) {
+      return normalizeCoords(value.department_latitude, value.department_longitude, value.gps_radius ?? value.radius);
+    }
+
+    return null;
+  }
+
+  function hasUsableRadius(coords) {
+    return coords && Number.isFinite(coords.radius) && coords.radius > 0;
+  }
+
+  function coordsFromString(value) {
+    if (typeof value !== "string") {
+      return null;
+    }
+
+    const objectLike = value.match(/"?lat"?\s*:\s*"?(-?\d+(?:\.\d+)?)"?[\s\S]*?"?lng"?\s*:\s*"?(-?\d+(?:\.\d+)?)"?/i);
+
+    if (objectLike) {
+      const radius = value.match(/"?(?:gps_radius|radius)"?\s*:\s*"?(\d+(?:\.\d+)?)"?/i);
+      return normalizeCoords(objectLike[1], objectLike[2], radius ? radius[1] : null);
+    }
+
+    const pair = value.match(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
+
+    if (pair) {
+      return normalizeCoords(pair[1], pair[2]);
+    }
+
+    return null;
+  }
+
+  function parseCoords(value, depth, seen) {
+    if (depth > 4 || value == null) {
+      return null;
+    }
+
+    const stringCoords = coordsFromString(value);
+
+    if (stringCoords) {
+      return stringCoords;
+    }
+
+    if (typeof value !== "object") {
+      return null;
+    }
+
+    if (seen.has(value)) {
+      return null;
+    }
+
+    seen.add(value);
+
+    const directCoords = coordsFromObject(value);
+
+    if (directCoords) {
+      return directCoords;
+    }
+
+    for (const key of Object.keys(value)) {
+      const coords = parseCoords(value[key], depth + 1, seen);
+
+      if (coords) {
+        return coords;
+      }
+    }
+
+    return null;
   }
 
   function callSuccess(success) {
@@ -126,9 +258,198 @@
       return;
     }
 
+    if (!hasPosition()) {
+      pendingSuccesses.add(success);
+      startScanner();
+      return;
+    }
+
     setTimeout(function () {
       success(createPosition());
     }, 0);
+  }
+
+  function flushSuccesses() {
+    for (const success of pendingSuccesses) {
+      callSuccess(success);
+    }
+
+    pendingSuccesses.clear();
+
+    for (const success of watchers.values()) {
+      callSuccess(success);
+    }
+  }
+
+  function updatePosition(coords, source) {
+    if (!coords || !Number.isFinite(coords.lat) || !Number.isFinite(coords.lng)) {
+      return false;
+    }
+
+    const appliedCoords = randomPointInRadius(coords);
+
+    position.lat = appliedCoords.lat;
+    position.lng = appliedCoords.lng;
+    position.radius = appliedCoords.radius;
+    position.source = source;
+
+    originalConsole.info("[flux-ubusac] location applied", {
+      lat: position.lat,
+      lng: position.lng,
+      radius: position.radius,
+      source: position.source,
+      randomLocationInRange: config.randomLocationInRange,
+      distanceFromCenter: appliedCoords.distanceFromCenter == null ? 0 : Math.round(appliedCoords.distanceFromCenter * 100) / 100,
+      center: appliedCoords.centerLat == null ? null : {
+        lat: appliedCoords.centerLat,
+        lng: appliedCoords.centerLng
+      }
+    });
+
+    flushSuccesses();
+    stopScanner();
+    return true;
+  }
+
+  function findTargetInValue(value) {
+    const rand = getRand();
+
+    if (!value || typeof value !== "object") {
+      return null;
+    }
+
+    if (value.circle && typeof value.circle.getLatLng === "function") {
+      const latLng = value.circle.getLatLng();
+      const radius = typeof value.circle.getRadius === "function" ? value.circle.getRadius() : null;
+      const coords = normalizeCoords(latLng.lat, latLng.lng, radius);
+
+      if (coords) {
+        return coords;
+      }
+    }
+
+    const departmentCoords = normalizeCoords(
+      value.department_latitude,
+      value.department_longitude,
+      value.gps_radius
+    );
+
+    if (departmentCoords) {
+      return departmentCoords;
+    }
+
+    if (rand && Array.isArray(value.title)) {
+      const match = value.title.find(function (item) {
+        return item && item.r_rand === rand;
+      });
+
+      const coords = coordsFromObject(match);
+
+      if (coords) {
+        return coords;
+      }
+    }
+
+    return null;
+  }
+
+  function scanVueState() {
+    const roots = [];
+    const nuxtEl = document.getElementById("__nuxt");
+
+    if (window.$nuxt) {
+      roots.push(window.$nuxt);
+    }
+
+    if (nuxtEl && nuxtEl.__vue__) {
+      roots.push(nuxtEl.__vue__);
+    }
+
+    const stack = roots.slice();
+    const seen = new WeakSet();
+    let fallbackCoords = null;
+
+    while (stack.length) {
+      const current = stack.pop();
+
+      if (!current || typeof current !== "object" || seen.has(current)) {
+        continue;
+      }
+
+      seen.add(current);
+
+      const coords = findTargetInValue(current) || findTargetInValue(current.$data) || findTargetInValue(current._data);
+
+      if (coords) {
+        if (hasUsableRadius(coords)) {
+          return coords;
+        }
+
+        fallbackCoords = fallbackCoords || coords;
+      }
+
+      if (Array.isArray(current.$children)) {
+        stack.push.apply(stack, current.$children);
+      }
+
+      if (current.$data && typeof current.$data === "object") {
+        stack.push(current.$data);
+      }
+
+      if (current._data && typeof current._data === "object") {
+        stack.push(current._data);
+      }
+    }
+
+    return fallbackCoords;
+  }
+
+  function scanPage() {
+    if (hasPosition()) {
+      return true;
+    }
+
+    const coords = scanVueState();
+
+    if (coords) {
+      pendingPageCoords = coords;
+
+      if (config.randomLocationInRange && !hasUsableRadius(coords) && Date.now() - scanStartedAt <= scanTimeoutMs) {
+        return false;
+      }
+
+      return updatePosition(coords, "page-state");
+    }
+
+    if (pendingPageCoords && Date.now() - scanStartedAt > scanTimeoutMs) {
+      return updatePosition(pendingPageCoords, "page-state");
+    }
+
+    return false;
+  }
+
+  function startScanner() {
+    if (scanTimer || hasPosition()) {
+      return;
+    }
+
+    scanStartedAt = Date.now();
+    scanPage();
+
+    scanTimer = setInterval(function () {
+      if (scanPage() || Date.now() - scanStartedAt > scanTimeoutMs) {
+        stopScanner();
+      }
+    }, scanIntervalMs);
+  }
+
+  function stopScanner() {
+    if (!scanTimer) {
+      return;
+    }
+
+    clearInterval(scanTimer);
+    scanTimer = null;
   }
 
   function overrideGeolocation() {
@@ -161,13 +482,66 @@
         }
       });
     } catch (error) {
+      window[stateKey] = false;
       console.error("[flux-ubusac] failed to override geolocation", error);
       return;
     }
 
     overridden = true;
+    originalConsole.info("[flux-ubusac] geolocation overridden");
+  }
 
-    console.info("[flux-ubusac] geolocation overridden");
+  function scheduleConsoleFallback(coords) {
+    pendingConsoleCoords = pendingConsoleCoords || coords;
+
+    if (pendingConsoleTimer) {
+      return;
+    }
+
+    pendingConsoleTimer = setTimeout(function () {
+      pendingConsoleTimer = null;
+
+      if (!hasPosition() && pendingConsoleCoords) {
+        updatePosition(pendingConsoleCoords, "console");
+      }
+    }, 500);
+  }
+
+  function applyConsoleCoords(coords) {
+    if (!coords) {
+      return false;
+    }
+
+    if (hasUsableRadius(coords) || !config.randomLocationInRange) {
+      if (pendingConsoleTimer) {
+        clearTimeout(pendingConsoleTimer);
+        pendingConsoleTimer = null;
+      }
+
+      updatePosition(coords, "console");
+      return true;
+    }
+
+    scheduleConsoleFallback(coords);
+    return false;
+  }
+
+  function inspectConsoleArgs(args) {
+    if (hasPosition()) {
+      return;
+    }
+
+    for (const arg of args) {
+      const coords = parseCoords(arg, 0, new WeakSet());
+
+      if (applyConsoleCoords(coords)) {
+        return;
+      }
+    }
+
+    const combinedCoords = coordsFromString(args.map(String).join(" "));
+
+    applyConsoleCoords(combinedCoords);
   }
 
   window.addEventListener("message", function (event) {
@@ -182,34 +556,6 @@
     normalizeConfig(event.data.config);
   });
 
-  const originalConsole = {
-    debug: console.debug,
-    info: console.info,
-    log: console.log,
-    warn: console.warn
-  };
-
-  function inspectConsoleArgs(args) {
-    if (coordinatesLocked) {
-      return;
-    }
-
-    for (const arg of args) {
-      const coords = parseCoords(arg, 0);
-
-      if (coords) {
-        updatePosition(coords);
-        break;
-      }
-    }
-
-    const combinedCoords = parseCoords(args.map(String).join(" "), 0);
-
-    if (combinedCoords) {
-      updatePosition(combinedCoords);
-    }
-  }
-
   for (const method of Object.keys(originalConsole)) {
     console[method] = function (...args) {
       inspectConsoleArgs(args);
@@ -219,4 +565,5 @@
   }
 
   overrideGeolocation();
+  startScanner();
 }());

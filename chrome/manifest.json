@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "flux-ubusac",
   "version": "1.0.0",
-  "description": "Overrides geolocation on the UBU registration prompt and updates the returned position when the page logs coordinates.",
+  "description": "Overrides geolocation on the UBU registration prompt after detecting the target coordinates.",
   "permissions": ["storage"],
   "host_permissions": [
     "https://dev.ubu.ac.th/*"
