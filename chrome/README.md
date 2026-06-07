@@ -1,6 +1,6 @@
-# flux-ubusac Chrome Extension
+# flux-ubusac
 
-Chrome Manifest V3 extension that overrides geolocation on the UBU registration prompt and derives the returned position from the page map/register state.
+Firefox Manifest V2 add-on that overrides geolocation on the UBU registration prompt and derives the returned position from the page map/register state.
 
 ## Target
 
@@ -13,33 +13,33 @@ The page hook scans Nuxt/Vue state for:
 - a `title` row whose `r_rand` matches the current `?rand=` query
 - logged coordinate strings or objects as a fallback
 
-## Side panel settings
+## Sidebar settings panel
 
-Open the Chrome side panel for the main settings UI. It uses the same soft white + dark-blue dashboard design as the Firefox sidebar and includes:
+Open the Chrome side panel for the main settings UI. It uses a white + dark-blue theme and includes:
 
 - randomize location in detected radius
-- restore defaults
+- reset defaults
 - advanced settings for:
   - accuracy min/max
   - target origin
   - scan interval/timeout
   - debug logs
   - manual fallback coordinates
-  - live status readout
+  - status readout
   - export/import JSON
 
 The old options page still exists as a quick fallback for accuracy range only.
 
-Accuracy is picked once per page-hook run. Latitude/longitude is picked once inside the received radius when randomization is enabled and a valid radius is available. Later geolocation calls reuse the same values.
+The sidebar bundles Kanit locally in `fonts/`, so the panel uses it even when the system font is missing.
+
+Accuracy is picked once per page-hook run. Latitude/longitude is always picked once inside the received radius when a valid radius is available. Later geolocation calls reuse the same values.
 
 ## Load Temporarily
 
 1. Open `chrome://extensions`.
-2. Enable Developer mode.
-3. Click `Load unpacked`.
-4. Select this folder.
-5. Open the extension side panel when you want to change settings.
-6. Visit any page on the target site.
+2. Click `Load Temporary Add-on...`.
+3. Select `manifest.json` from this folder.
+4. Visit any page on the target site.
 
 To test in the page console:
 

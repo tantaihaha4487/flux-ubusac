@@ -43,7 +43,7 @@ jobs:
       - name: Package Chrome extension
         run: |
           mkdir -p dist/chrome
-          (cd chrome && zip -r ../dist/chrome/flux-ubusac-chrome.zip manifest.json content.js page-hook.js options.html options.js sidebar.html sidebar.js settings.js README.md)
+          (cd chrome && zip -r ../dist/chrome/flux-ubusac-chrome.zip manifest.json content.js page-hook.js options.html options.js sidebar.html sidebar.js settings.js fonts README.md)
 
       - name: Upload Chrome package
         uses: actions/upload-artifact@v4
@@ -62,7 +62,7 @@ jobs:
       - name: Package Firefox add-on
         run: |
           mkdir -p dist/firefox
-          (cd firefox && zip -r ../dist/firefox/flux-ubusac-firefox.zip manifest.json content.js page-hook.js options.html options.js sidebar.html sidebar.js settings.js README.md)
+          (cd firefox && zip -r ../dist/firefox/flux-ubusac-firefox.zip manifest.json content.js page-hook.js options.html options.js sidebar.html sidebar.js settings.js fonts README.md)
 
       - name: Upload Firefox package
         uses: actions/upload-artifact@v4
