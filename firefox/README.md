@@ -13,9 +13,22 @@ The page hook scans Nuxt/Vue state for:
 - a `title` row whose `r_rand` matches the current `?rand=` query
 - logged coordinate strings or objects as a fallback
 
-## Options
+## Sidebar settings panel
 
-Open the extension options to configure the random integer `coords.accuracy` range. Defaults are `0` to `10`.
+Open the Firefox sidebar for the main settings UI. It uses a white + dark-blue theme and includes:
+
+- randomize location in detected radius
+- reset defaults
+- advanced settings for:
+  - accuracy min/max
+  - target origin
+  - scan interval/timeout
+  - debug logs
+  - manual fallback coordinates
+  - status readout
+  - export/import JSON
+
+The old options page still exists as a quick fallback for accuracy range only.
 
 Accuracy is picked once per page-hook run. Latitude/longitude is always picked once inside the received radius when a valid radius is available. Later geolocation calls reuse the same values.
 

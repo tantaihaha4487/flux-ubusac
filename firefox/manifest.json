@@ -17,6 +17,11 @@
   "web_accessible_resources": [
     "page-hook.js"
   ],
+  "sidebar_action": {
+    "default_title": "flux-ubusac",
+    "default_panel": "sidebar.html",
+    "browser_style": false
+  },
   "options_ui": {
     "page": "options.html",
     "browser_style": true

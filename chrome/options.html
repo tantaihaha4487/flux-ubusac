@@ -11,6 +11,24 @@
         margin: 0 auto;
         padding: 24px;
         font: 15px/1.4 system-ui, sans-serif;
+        color: #11213f;
+        background: #f5f8ff;
+      }
+
+      .panel {
+        padding: 22px;
+        border: 1px solid #cdd8ea;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 16px 30px rgba(15, 47, 99, 0.12);
+      }
+
+      .note {
+        margin: 0 0 16px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: #eef4ff;
+        color: #174ea6;
       }
 
       label {
@@ -24,6 +42,7 @@
         width: 100%;
       }
 
+
       button {
         margin-top: 18px;
       }
@@ -35,21 +54,25 @@
     </style>
   </head>
   <body>
-    <h1>flux-ubusac</h1>
-    <p>Configure the random accuracy range returned by the geolocation override.</p>
+    <div class="panel">
+      <h1>flux-ubusac</h1>
+      <p>Quick fallback options page. The full settings UI now lives in the Chrome side panel.</p>
+      <p class="note">Use the sidebar for target origin, scan timing, debug logs, manual fallback coordinates, status, and export/import.</p>
 
-    <form id="options-form">
-      <label for="accuracy-min">Minimum accuracy</label>
-      <input id="accuracy-min" name="accuracyMin" type="number" step="1" min="0" required>
+      <form id="options-form">
+        <label for="accuracy-min">Minimum accuracy</label>
+        <input id="accuracy-min" name="accuracyMin" type="number" step="1" min="0" required>
 
-      <label for="accuracy-max">Maximum accuracy</label>
-      <input id="accuracy-max" name="accuracyMax" type="number" step="1" min="0" required>
+        <label for="accuracy-max">Maximum accuracy</label>
+        <input id="accuracy-max" name="accuracyMax" type="number" step="1" min="0" required>
 
-      <button type="submit">Save</button>
-    </form>
+        <button type="submit">Save</button>
+      </form>
 
-    <p id="status" role="status"></p>
+      <p id="status" role="status"></p>
+    </div>
 
+    <script src="settings.js"></script>
     <script src="options.js"></script>
   </body>
 </html>

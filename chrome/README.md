@@ -13,11 +13,24 @@ The page hook scans Nuxt/Vue state for:
 - a `title` row whose `r_rand` matches the current `?rand=` query
 - logged coordinate strings or objects as a fallback
 
-## Options
+## Side panel settings
 
-Open the extension options to configure the random integer `coords.accuracy` range. Defaults are `0` to `10`.
+Open the Chrome side panel for the main settings UI. It uses the same soft white + dark-blue dashboard design as the Firefox sidebar and includes:
 
-Accuracy is picked once per page-hook run. Latitude/longitude is always picked once inside the received radius when a valid radius is available. Later geolocation calls reuse the same values.
+- randomize location in detected radius
+- restore defaults
+- advanced settings for:
+  - accuracy min/max
+  - target origin
+  - scan interval/timeout
+  - debug logs
+  - manual fallback coordinates
+  - live status readout
+  - export/import JSON
+
+The old options page still exists as a quick fallback for accuracy range only.
+
+Accuracy is picked once per page-hook run. Latitude/longitude is picked once inside the received radius when randomization is enabled and a valid radius is available. Later geolocation calls reuse the same values.
 
 ## Load Temporarily
 
@@ -25,7 +38,8 @@ Accuracy is picked once per page-hook run. Latitude/longitude is always picked o
 2. Enable Developer mode.
 3. Click `Load unpacked`.
 4. Select this folder.
-5. Visit any page on the target site.
+5. Open the extension side panel when you want to change settings.
+6. Visit any page on the target site.
 
 To test in the page console:
 

@@ -18,9 +18,13 @@ jobs:
           node --check chrome/content.js
           node --check chrome/page-hook.js
           node --check chrome/options.js
+          node --check chrome/sidebar.js
+          node --check chrome/settings.js
           node --check firefox/content.js
           node --check firefox/page-hook.js
           node --check firefox/options.js
+          node --check firefox/sidebar.js
+          node --check firefox/settings.js
           node --check console/flux-ubusac-console.js
 
       - name: Validate manifests
@@ -39,7 +43,7 @@ jobs:
       - name: Package Chrome extension
         run: |
           mkdir -p dist/chrome
-          (cd chrome && zip -r ../dist/chrome/flux-ubusac-chrome.zip manifest.json content.js page-hook.js options.html options.js README.md)
+          (cd chrome && zip -r ../dist/chrome/flux-ubusac-chrome.zip manifest.json content.js page-hook.js options.html options.js sidebar.html sidebar.js settings.js README.md)
 
       - name: Upload Chrome package
         uses: actions/upload-artifact@v4
@@ -58,7 +62,7 @@ jobs:
       - name: Package Firefox add-on
         run: |
           mkdir -p dist/firefox
-          (cd firefox && zip -r ../dist/firefox/flux-ubusac-firefox.zip manifest.json content.js page-hook.js options.html options.js README.md)
+          (cd firefox && zip -r ../dist/firefox/flux-ubusac-firefox.zip manifest.json content.js page-hook.js options.html options.js sidebar.html sidebar.js settings.js README.md)
 
       - name: Upload Firefox package
         uses: actions/upload-artifact@v4

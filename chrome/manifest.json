@@ -3,7 +3,10 @@
   "name": "flux-ubusac",
   "version": "1.0.0",
   "description": "Overrides geolocation on the UBU registration prompt after detecting the target coordinates.",
-  "permissions": ["storage"],
+  "permissions": [
+    "storage",
+    "sidePanel"
+  ],
   "host_permissions": [
     "https://dev.ubu.ac.th/*"
   ],
@@ -20,5 +23,8 @@
       "matches": ["https://dev.ubu.ac.th/*"]
     }
   ],
+  "side_panel": {
+    "default_path": "sidebar.html"
+  },
   "options_page": "options.html"
 }

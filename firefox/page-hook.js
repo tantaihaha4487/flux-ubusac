@@ -10,17 +10,23 @@
 
   window[stateKey] = true;
 
-  const targetOrigin = "https://dev.ubu.ac.th";
-  const scanIntervalMs = 250;
-  const scanTimeoutMs = 10000;
   const config = {
     accuracyMin: 0,
     accuracyMax: 10,
-    randomLocationInRange: true
+    randomLocationInRange: true,
+    targetOrigin: "https://dev.ubu.ac.th",
+    scanIntervalMs: 250,
+    scanTimeoutMs: 10000,
+    debugLogs: true,
+    manualFallbackEnabled: false,
+    manualLatitude: "",
+    manualLongitude: "",
+    manualRadius: ""
   };
 
   const originalConsole = {
     debug: console.debug,
+    error: console.error,
     info: console.info,
     log: console.log,
     warn: console.warn
@@ -44,25 +50,88 @@
   let pendingConsoleCoords = null;
   let pendingConsoleTimer = null;
 
-  if (window.location.origin !== targetOrigin) {
-    originalConsole.warn("[flux-ubusac] current page is not the configured target origin", {
-      current: window.location.origin,
-      target: targetOrigin
-    });
+  function reportInfo(message, details) {
+    if (!config.debugLogs) {
+      return;
+    }
+
+    if (typeof details === "undefined") {
+      originalConsole.info(message);
+      return;
+    }
+
+    originalConsole.info(message, details);
+  }
+
+  function reportWarn(message, details) {
+    if (!config.debugLogs) {
+      return;
+    }
+
+    if (typeof details === "undefined") {
+      originalConsole.warn(message);
+      return;
+    }
+
+    originalConsole.warn(message, details);
+  }
+
+  function sendStatus(status) {
+    window.postMessage({
+      source: "flux-ubusac",
+      type: "status",
+      status: Object.assign({
+        pageOrigin: window.location.origin,
+        configuredTargetOrigin: config.targetOrigin,
+        updatedAt: Date.now()
+      }, status)
+    }, window.location.origin);
   }
 
   function normalizeConfig(nextConfig) {
+    const previousInterval = config.scanIntervalMs;
+    const previousTimeout = config.scanTimeoutMs;
     const min = Math.trunc(Number(nextConfig && nextConfig.accuracyMin));
     const max = Math.trunc(Number(nextConfig && nextConfig.accuracyMax));
+    const scanInterval = Math.trunc(Number(nextConfig && nextConfig.scanIntervalMs));
+    const scanTimeout = Math.trunc(Number(nextConfig && nextConfig.scanTimeoutMs));
 
     config.accuracyMin = Number.isFinite(min) ? Math.max(0, min) : 0;
     config.accuracyMax = Number.isFinite(max) ? Math.max(0, max) : 10;
-    config.randomLocationInRange = true;
+    config.randomLocationInRange = nextConfig && typeof nextConfig.randomLocationInRange === "boolean"
+      ? nextConfig.randomLocationInRange
+      : true;
+    config.targetOrigin = typeof (nextConfig && nextConfig.targetOrigin) === "string" && nextConfig.targetOrigin
+      ? nextConfig.targetOrigin
+      : "https://dev.ubu.ac.th";
+    config.scanIntervalMs = Number.isFinite(scanInterval) ? Math.max(50, scanInterval) : 250;
+    config.scanTimeoutMs = Number.isFinite(scanTimeout) ? Math.max(500, scanTimeout) : 10000;
+    config.debugLogs = !nextConfig || typeof nextConfig.debugLogs !== "boolean" ? true : nextConfig.debugLogs;
+    config.manualFallbackEnabled = !!(nextConfig && nextConfig.manualFallbackEnabled);
+    config.manualLatitude = nextConfig && nextConfig.manualLatitude != null ? nextConfig.manualLatitude : "";
+    config.manualLongitude = nextConfig && nextConfig.manualLongitude != null ? nextConfig.manualLongitude : "";
+    config.manualRadius = nextConfig && nextConfig.manualRadius != null ? nextConfig.manualRadius : "";
 
     if (config.accuracyMin > config.accuracyMax) {
       const previousMin = config.accuracyMin;
       config.accuracyMin = config.accuracyMax;
       config.accuracyMax = previousMin;
+    }
+
+    if (config.scanIntervalMs > config.scanTimeoutMs) {
+      config.scanIntervalMs = config.scanTimeoutMs;
+    }
+
+    if (window.location.origin !== config.targetOrigin) {
+      reportWarn("[flux-ubusac] current page is not the configured target origin", {
+        current: window.location.origin,
+        target: config.targetOrigin
+      });
+    }
+
+    if (scanTimer && !hasPosition() && (previousInterval !== config.scanIntervalMs || previousTimeout !== config.scanTimeoutMs)) {
+      stopScanner();
+      startScanner();
     }
   }
 
@@ -194,6 +263,14 @@
     return coords && Number.isFinite(coords.radius) && coords.radius > 0;
   }
 
+  function manualFallbackCoords() {
+    if (!config.manualFallbackEnabled) {
+      return null;
+    }
+
+    return normalizeCoords(config.manualLatitude, config.manualLongitude, config.manualRadius);
+  }
+
   function coordsFromString(value) {
     if (typeof value !== "string") {
       return null;
@@ -293,7 +370,7 @@
     position.radius = appliedCoords.radius;
     position.source = source;
 
-    originalConsole.info("[flux-ubusac] location applied", {
+    reportInfo("[flux-ubusac] location applied", {
       lat: position.lat,
       lng: position.lng,
       radius: position.radius,
@@ -304,6 +381,17 @@
         lat: appliedCoords.centerLat,
         lng: appliedCoords.centerLng
       }
+    });
+
+    sendStatus({
+      phase: "location-applied",
+      source: source,
+      lat: position.lat,
+      lng: position.lng,
+      radius: position.radius,
+      message: source === "manual-fallback"
+        ? "Manual fallback coordinates applied"
+        : "Detected coordinates applied"
     });
 
     flushSuccesses();
@@ -414,15 +502,29 @@
     if (coords) {
       pendingPageCoords = coords;
 
-      if (config.randomLocationInRange && !hasUsableRadius(coords) && Date.now() - scanStartedAt <= scanTimeoutMs) {
+      if (config.randomLocationInRange && !hasUsableRadius(coords) && Date.now() - scanStartedAt <= config.scanTimeoutMs) {
         return false;
       }
 
       return updatePosition(coords, "page-state");
     }
 
-    if (pendingPageCoords && Date.now() - scanStartedAt > scanTimeoutMs) {
+    if (pendingPageCoords && Date.now() - scanStartedAt > config.scanTimeoutMs) {
       return updatePosition(pendingPageCoords, "page-state");
+    }
+
+    if (Date.now() - scanStartedAt > config.scanTimeoutMs) {
+      const fallbackCoords = manualFallbackCoords();
+
+      if (fallbackCoords) {
+        return updatePosition(fallbackCoords, "manual-fallback");
+      }
+
+      sendStatus({
+        phase: "scan-timeout",
+        source: null,
+        message: "Timed out while waiting for page coordinates"
+      });
     }
 
     return false;
@@ -437,10 +539,10 @@
     scanPage();
 
     scanTimer = setInterval(function () {
-      if (scanPage() || Date.now() - scanStartedAt > scanTimeoutMs) {
+      if (scanPage() || Date.now() - scanStartedAt > config.scanTimeoutMs) {
         stopScanner();
       }
-    }, scanIntervalMs);
+    }, config.scanIntervalMs);
   }
 
   function stopScanner() {
@@ -483,12 +585,22 @@
       });
     } catch (error) {
       window[stateKey] = false;
-      console.error("[flux-ubusac] failed to override geolocation", error);
+      originalConsole.error("[flux-ubusac] failed to override geolocation", error);
+      sendStatus({
+        phase: "error",
+        source: null,
+        message: "Failed to override geolocation"
+      });
       return;
     }
 
     overridden = true;
-    originalConsole.info("[flux-ubusac] geolocation overridden");
+    reportInfo("[flux-ubusac] geolocation overridden");
+    sendStatus({
+      phase: "hook-ready",
+      source: null,
+      message: "Geolocation override is active"
+    });
   }
 
   function scheduleConsoleFallback(coords) {
