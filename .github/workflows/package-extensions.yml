@@ -1,0 +1,41 @@
+name: Package Extensions
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate JavaScript
+        run: |
+          node --check chrome/content.js
+          node --check chrome/page-hook.js
+          node --check chrome/options.js
+          node --check firefox/content.js
+          node --check firefox/page-hook.js
+          node --check firefox/options.js
+          node --check console/flux-ubusac-console.js
+
+      - name: Validate manifests
+        run: |
+          node -e "JSON.parse(require('fs').readFileSync('chrome/manifest.json', 'utf8'))"
+          node -e "JSON.parse(require('fs').readFileSync('firefox/manifest.json', 'utf8'))"
+
+      - name: Package browser extensions
+        run: |
+          mkdir -p dist
+          (cd chrome && zip -r ../dist/flux-ubusac-chrome.zip manifest.json content.js page-hook.js options.html options.js README.md)
+          (cd firefox && zip -r ../dist/flux-ubusac-firefox.zip manifest.json content.js page-hook.js options.html options.js README.md)
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: flux-ubusac-extension-zips
+          path: dist/*.zip

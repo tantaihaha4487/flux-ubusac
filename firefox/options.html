@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>flux-ubusac Options</title>
+    <style>
+      body {
+        box-sizing: border-box;
+        max-width: 520px;
+        margin: 0 auto;
+        padding: 24px;
+        font: 15px/1.4 system-ui, sans-serif;
+      }
+
+      label {
+        display: block;
+        margin: 16px 0 6px;
+        font-weight: 600;
+      }
+
+      input {
+        box-sizing: border-box;
+        width: 100%;
+      }
+
+      button {
+        margin-top: 18px;
+      }
+
+      #status {
+        min-height: 1.4em;
+        margin-top: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>flux-ubusac</h1>
+    <p>Configure the random accuracy range returned by the geolocation override.</p>
+
+    <form id="options-form">
+      <label for="accuracy-min">Minimum accuracy</label>
+      <input id="accuracy-min" name="accuracyMin" type="number" step="1" min="0" required>
+
+      <label for="accuracy-max">Maximum accuracy</label>
+      <input id="accuracy-max" name="accuracyMax" type="number" step="1" min="0" required>
+
+      <button type="submit">Save</button>
+    </form>
+
+    <p id="status" role="status"></p>
+
+    <script src="options.js"></script>
+  </body>
+</html>

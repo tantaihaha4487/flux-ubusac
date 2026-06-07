@@ -1,0 +1,29 @@
+{
+  "manifest_version": 2,
+  "name": "flux-ubusac",
+  "version": "1.0.0",
+  "description": "Overrides geolocation on the UBU registration prompt after detecting the target coordinates.",
+  "permissions": [
+    "storage",
+    "https://dev.ubu.ac.th/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://dev.ubu.ac.th/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    "page-hook.js"
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "browser_style": true
+  },
+  "applications": {
+    "gecko": {
+      "id": "flux-ubusac@example.local"
+    }
+  }
+}
