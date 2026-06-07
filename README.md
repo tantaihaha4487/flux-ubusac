@@ -17,7 +17,7 @@ GitHub Actions validates the JavaScript files and manifests, then builds browser
 
 The generated archives are not committed to the repository. Download them from the workflow run artifacts.
 
-The sidebar panels bundle Kanit locally and use lighter title weights so the header stays readable.
+The sidebar panels bundle Kanit locally and use Kanit 200 for the title plus Kanit 300 for supporting text so the header stays readable.
 
 ## Console Version - Ready to Copy
 
