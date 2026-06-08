@@ -4,638 +4,173 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>flux-ubusac Sidebar</title>
-    <style>
-      @font-face {
-        font-family: "Kanit";
-        font-style: normal;
-        font-weight: 200;
-        font-display: swap;
-        src: url("fonts/Kanit-200.ttf") format("truetype");
-      }
-
-      @font-face {
-        font-family: "Kanit";
-        font-style: normal;
-        font-weight: 300;
-        font-display: swap;
-        src: url("fonts/Kanit-400.ttf") format("truetype");
-      }
-
-      @font-face {
-        font-family: "Kanit";
-        font-style: normal;
-        font-weight: 400;
-        font-display: swap;
-        src: url("fonts/Kanit-400.ttf") format("truetype");
-      }
-
-      @font-face {
-        font-family: "Kanit";
-        font-style: normal;
-        font-weight: 500;
-        font-display: swap;
-        src: url("fonts/Kanit-500.ttf") format("truetype");
-      }
-
-      @font-face {
-        font-family: "Kanit";
-        font-style: normal;
-        font-weight: 700;
-        font-display: swap;
-        src: url("fonts/Kanit-700.ttf") format("truetype");
-      }
-
-      @font-face {
-        font-family: "Kanit";
-        font-style: normal;
-        font-weight: 800;
-        font-display: swap;
-        src: url("fonts/Kanit-800.ttf") format("truetype");
-      }
-
-      :root {
-        color-scheme: light;
-        --canvas: #eef3fb;
-        --canvas-2: #f8fbff;
-        --card: #ffffff;
-        --card-soft: #f3f7ff;
-        --line: #d9e3f3;
-        --line-strong: #c5d3e8;
-        --text: #071b3a;
-        --muted: #6f7c8f;
-        --blue: #1f5ab8;
-        --blue-strong: #123d86;
-        --cyan: #40c7d1;
-        --green: #20d6a1;
-        --red: #bb2d24;
-        --red-soft: #fde8e6;
-        --shadow: 0 18px 45px rgba(33, 58, 104, 0.14);
-        --shadow-soft: 0 10px 24px rgba(33, 58, 104, 0.08);
-        --radius-xl: 22px;
-        --radius-lg: 18px;
-        --radius-md: 14px;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      html,
-      body {
-        min-width: 0;
-        min-height: 100%;
-        margin: 0;
-      }
-
-      body {
-        font: 14px/1.5 "Kanit", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        color: var(--text);
-        background:
-          radial-gradient(circle at 20% 0%, rgba(64, 199, 209, 0.18), transparent 26%),
-          linear-gradient(145deg, #f9fbff 0%, var(--canvas) 70%, #e4ebf7 100%);
-      }
-
-      h1,
-      h2,
-      h3,
-      p {
-        margin: 0;
-      }
-
-      button,
-      input,
-      textarea {
-        font: inherit;
-      }
-
-      .app {
-        min-height: 100vh;
-        padding: 14px;
-      }
-
-      .surface {
-        display: grid;
-        gap: 14px;
-        width: 100%;
-        max-width: 520px;
-        margin: 0 auto;
-      }
-
-      .hero,
-      .card,
-      details {
-        border: 1px solid rgba(217, 227, 243, 0.9);
-        border-radius: var(--radius-xl);
-        background: rgba(255, 255, 255, 0.92);
-        box-shadow: var(--shadow-soft);
-      }
-
-      .hero {
-        position: relative;
-        overflow: hidden;
-        padding: 18px;
-      }
-
-      .hero::before {
-        content: "";
-        position: absolute;
-        inset: auto -30px -70px auto;
-        width: 150px;
-        height: 150px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, rgba(64, 199, 209, 0.28), rgba(31, 90, 184, 0.18));
-      }
-
-      .hero-content {
-        position: relative;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-      }
-
-      .language-picker {
-        position: absolute;
-        top: 14px;
-        right: 14px;
-        z-index: 1;
-        width: auto;
-        min-height: 34px;
-        padding: 5px 30px 5px 11px;
-        border-radius: 999px;
-        border: 1px solid var(--line);
-        background: rgba(255, 255, 255, 0.86);
-        color: var(--blue-strong);
-        font-weight: 800;
-        cursor: pointer;
-      }
-
-      .mark {
-        display: grid;
-        flex: 0 0 auto;
-        width: 48px;
-        height: 48px;
-        place-items: center;
-        border-radius: 17px;
-        color: #fff;
-        font-weight: 800;
-        letter-spacing: -0.03em;
-        background: linear-gradient(135deg, var(--cyan), var(--blue));
-        box-shadow: 0 14px 28px rgba(31, 90, 184, 0.28);
-      }
-
-      .eyebrow {
-        color: var(--muted);
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      }
-
-      h1 {
-        margin-top: 2px;
-        font-size: 22px;
-        line-height: 1.1;
-        letter-spacing: -0.04em;
-        font-weight: 200;
-      }
-
-      .subtitle {
-        margin-top: 6px;
-        color: var(--muted);
-        font-size: 13px;
-        font-weight: 300;
-      }
-
-      .card {
-        padding: 16px;
-      }
-
-      .section-head {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 12px;
-        margin-bottom: 14px;
-      }
-
-      h2 {
-        font-size: 18px;
-        line-height: 1.2;
-        letter-spacing: -0.03em;
-      }
-
-      .section-copy {
-        margin-top: 5px;
-        color: var(--muted);
-        font-size: 13px;
-        font-weight: 300;
-      }
-
-      .toggle {
-        display: flex;
-        gap: 12px;
-        align-items: flex-start;
-        padding: 14px;
-        border: 1px solid var(--line-strong);
-        border-radius: var(--radius-lg);
-        background: linear-gradient(180deg, #f7faff 0%, #edf4ff 100%);
-      }
-
-      .toggle input {
-        flex: 0 0 auto;
-        width: 16px;
-        height: 16px;
-        margin: 2px 0 0;
-        accent-color: var(--blue);
-      }
-
-      .toggle strong {
-        display: block;
-        font-weight: 800;
-        letter-spacing: -0.01em;
-      }
-
-      .toggle p {
-        margin-top: 4px;
-        color: #445a7a;
-        font-size: 13px;
-        font-weight: 300;
-      }
-
-      details {
-        overflow: hidden;
-        margin-top: 12px;
-        box-shadow: none;
-      }
-
-      summary {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        min-height: 52px;
-        padding: 0 16px;
-        cursor: pointer;
-        list-style: none;
-        font-weight: 800;
-        background: linear-gradient(180deg, #f9fbff 0%, #f1f6ff 100%);
-      }
-
-      summary::-webkit-details-marker {
-        display: none;
-      }
-
-      summary::after {
-        content: "Open";
-        color: var(--blue);
-        font-size: 12px;
-        font-weight: 800;
-      }
-
-      details[open] summary {
-        border-bottom: 1px solid var(--line);
-      }
-
-      details[open] summary::after {
-        content: "Close";
-      }
-
-      .details-body {
-        display: grid;
-        gap: 13px;
-        padding: 16px;
-        background: #fff;
-      }
-
-      .field {
-        display: grid;
-        gap: 7px;
-      }
-
-      .two-up {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
-      }
-
-      label {
-        font-weight: 700;
-      }
-
-      input,
-      textarea {
-        width: 100%;
-        border: 1px solid var(--line);
-        border-radius: var(--radius-md);
-        background: var(--canvas-2);
-        color: var(--text);
-        outline: none;
-        transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
-      }
-
-      input {
-        min-height: 42px;
-        padding: 9px 12px;
-      }
-
-      textarea {
-        min-height: 118px;
-        padding: 12px;
-        resize: vertical;
-      }
-
-      input:focus,
-      textarea:focus,
-      summary:focus-visible {
-        border-color: rgba(31, 90, 184, 0.65);
-        box-shadow: 0 0 0 4px rgba(31, 90, 184, 0.12);
-        background: #fff;
-      }
-
-      .hint {
-        color: var(--muted);
-        font-size: 12px;
-        font-weight: 300;
-      }
-
-      .actions {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
-        margin-top: 12px;
-      }
-
-      .actions.single {
-        grid-template-columns: 1fr;
-      }
-
-      button {
-        min-height: 44px;
-        border: 0;
-        border-radius: var(--radius-md);
-        cursor: pointer;
-        font-weight: 800;
-        letter-spacing: -0.01em;
-        transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.14s ease;
-      }
-
-      button:hover {
-        filter: brightness(1.02);
-        transform: translateY(-1px);
-      }
-
-      button:active {
-        transform: translateY(0);
-      }
-
-      .primary {
-        color: #fff;
-        background: linear-gradient(135deg, var(--blue), var(--blue-strong));
-        box-shadow: 0 12px 24px rgba(31, 90, 184, 0.22);
-      }
-
-      .secondary {
-        color: var(--blue-strong);
-        background: linear-gradient(180deg, #eef5ff, #e5efff);
-      }
-
-      .danger {
-        color: var(--red);
-        background: var(--red-soft);
-      }
-
-      #status {
-        min-height: 18px;
-        margin-top: 10px;
-        font-size: 13px;
-        font-weight: 700;
-      }
-
-      #status.success {
-        color: #16824a;
-      }
-
-      #status.error {
-        color: var(--red);
-      }
-
-      .status-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
-      }
-
-      .status-item {
-        min-width: 0;
-        padding: 12px;
-        border: 1px solid var(--line);
-        border-radius: var(--radius-lg);
-        background: linear-gradient(180deg, #fff 0%, #f7faff 100%);
-      }
-
-      .status-label {
-        display: block;
-        color: var(--muted);
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-      }
-
-      .status-value {
-        margin-top: 5px;
-        overflow-wrap: anywhere;
-        font-weight: 800;
-      }
-
-      .status-message {
-        margin-top: 12px;
-        padding: 12px;
-        border-radius: var(--radius-lg);
-        background: linear-gradient(135deg, rgba(64, 199, 209, 0.13), rgba(31, 90, 184, 0.09));
-        color: var(--blue-strong);
-        font-weight: 650;
-      }
-
-      @media (max-width: 340px) {
-        .app {
-          padding: 10px;
-        }
-
-        .two-up,
-        .actions,
-        .status-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="sidebar.css">
   </head>
-  <body>
-    <main class="app">
-      <div class="surface">
-        <section class="hero">
-          <select class="language-picker" id="panel-language" aria-label="Panel language">
+  <body class="min-h-screen overflow-x-hidden bg-slate-100 text-slate-950 antialiased">
+    <main class="min-h-screen px-3 py-3 sm:px-4">
+      <div class="mx-auto flex w-full max-w-[28rem] flex-col gap-3">
+        <section class="relative overflow-hidden rounded-[1.75rem] border border-white/70 bg-white/90 p-4 shadow-[0_18px_45px_rgba(15,23,42,0.12)] backdrop-blur">
+          <div class="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-cyan-200/60 blur-2xl"></div>
+          <div class="pointer-events-none absolute -bottom-16 right-5 h-40 w-40 rounded-full bg-blue-300/30 blur-2xl"></div>
+          <select class="absolute right-3 top-3 z-10 h-9 rounded-full border border-slate-200 bg-white/85 px-3 pr-8 text-xs font-extrabold text-blue-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100" id="panel-language" aria-label="Panel language">
             <option value="en">EN</option>
             <option value="th">TH</option>
           </select>
-          <div class="hero-content">
-            <div class="mark" aria-hidden="true">F</div>
-            <div>
-              <p class="eyebrow" data-i18n="heroEyebrow">Location control</p>
-              <h1>flux-ubusac</h1>
-              <p class="subtitle" data-i18n="heroSubtitle">Tune the spoofed location used on the UBU registration prompt.</p>
+          <div class="relative flex items-center gap-3 pr-20">
+            <div class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-cyan-300 to-blue-700 text-lg font-extrabold text-white shadow-[0_14px_28px_rgba(29,78,216,0.28)]" aria-hidden="true">F</div>
+            <div class="min-w-0">
+              <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500" data-i18n="heroEyebrow">Location control</p>
+              <h1 class="mt-0.5 text-2xl font-extralight leading-none tracking-[-0.05em] text-slate-950">flux-ubusac</h1>
+              <p class="mt-2 text-[13px] font-light leading-5 text-slate-500" data-i18n="heroSubtitle">Tune the spoofed location used on the UBU registration prompt.</p>
             </div>
           </div>
         </section>
 
-        <form id="sidebar-form" class="card">
-          <div class="section-head">
+        <form id="sidebar-form" class="rounded-[1.5rem] border border-white/75 bg-white/90 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.08)] backdrop-blur">
+          <div class="mb-3 flex items-start justify-between gap-3">
             <div>
-              <h2 data-i18n="locationTitle">Location behavior</h2>
-              <p class="section-copy" data-i18n="locationCopy">Set the default behavior for generated coordinates.</p>
+              <h2 class="text-lg font-extrabold leading-tight tracking-[-0.03em] text-slate-950" data-i18n="locationTitle">Location behavior</h2>
+              <p class="mt-1 text-[13px] font-light leading-5 text-slate-500" data-i18n="locationCopy">Set the default behavior for generated coordinates.</p>
             </div>
           </div>
 
-          <label class="toggle" for="random-location-in-range">
-            <input id="random-location-in-range" name="randomLocationInRange" type="checkbox">
-            <span>
-              <strong data-i18n="randomizeTitle">Randomize inside detected area</strong>
-              <p data-i18n="randomizeCopy">Pick one point inside the detected radius. Turn this off to use the center point.</p>
+          <label class="group flex cursor-pointer gap-3 rounded-2xl border border-blue-100 bg-gradient-to-b from-blue-50 to-white p-3.5 transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-sm" for="random-location-in-range">
+            <input class="mt-1 h-4 w-4 shrink-0 accent-blue-700" id="random-location-in-range" name="randomLocationInRange" type="checkbox">
+            <span class="min-w-0">
+              <strong class="block text-sm font-extrabold leading-5 text-slate-950" data-i18n="randomizeTitle">Randomize inside detected area</strong>
+              <span class="mt-1 block text-[13px] font-light leading-5 text-slate-600" data-i18n="randomizeCopy">Pick one point inside the detected radius. Turn this off to use the center point.</span>
             </span>
           </label>
 
-          <details>
-            <summary><span data-i18n="advancedTitle">Advanced settings</span></summary>
-            <div class="details-body">
-              <div class="two-up">
-                <div class="field">
-                  <label for="accuracy-min" data-i18n="accuracyMin">Minimum accuracy</label>
-                  <input id="accuracy-min" name="accuracyMin" type="number" step="1" min="0" required>
+          <details class="panel-details mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <summary class="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 bg-slate-50 px-4 text-sm font-extrabold text-slate-900 outline-none transition focus-visible:ring-4 focus-visible:ring-blue-100"><span data-i18n="advancedTitle">Advanced settings</span></summary>
+            <div class="grid gap-3 border-t border-slate-200 bg-white p-3.5">
+              <div class="two-up grid gap-2.5">
+                <div class="grid gap-1.5">
+                  <label class="text-sm font-bold text-slate-800" for="accuracy-min" data-i18n="accuracyMin">Minimum accuracy</label>
+                  <input class="field-control" id="accuracy-min" name="accuracyMin" type="number" step="1" min="0" required>
                 </div>
-                <div class="field">
-                  <label for="accuracy-max" data-i18n="accuracyMax">Maximum accuracy</label>
-                  <input id="accuracy-max" name="accuracyMax" type="number" step="1" min="0" required>
-                </div>
-              </div>
-
-              <div class="field">
-                <label for="target-origin" data-i18n="targetOrigin">Target origin</label>
-                <input id="target-origin" name="targetOrigin" type="url" placeholder="https://dev.ubu.ac.th">
-                <p class="hint" data-i18n="targetHint">The page hook can only run on sites allowed by the extension manifest.</p>
-              </div>
-
-              <div class="two-up">
-                <div class="field">
-                  <label for="scan-interval-ms" data-i18n="scanEvery">Scan every</label>
-                  <input id="scan-interval-ms" name="scanIntervalMs" type="number" step="1" min="50">
-                  <p class="hint" data-i18n="milliseconds">Milliseconds</p>
-                </div>
-                <div class="field">
-                  <label for="scan-timeout-ms" data-i18n="giveUpAfter">Give up after</label>
-                  <input id="scan-timeout-ms" name="scanTimeoutMs" type="number" step="1" min="500">
-                  <p class="hint" data-i18n="milliseconds">Milliseconds</p>
+                <div class="grid gap-1.5">
+                  <label class="text-sm font-bold text-slate-800" for="accuracy-max" data-i18n="accuracyMax">Maximum accuracy</label>
+                  <input class="field-control" id="accuracy-max" name="accuracyMax" type="number" step="1" min="0" required>
                 </div>
               </div>
 
-              <label class="toggle" for="debug-logs">
-                <input id="debug-logs" name="debugLogs" type="checkbox">
-                <span>
-                  <strong data-i18n="debugTitle">Debug logs</strong>
-                  <p data-i18n="debugCopy">Show useful flux-ubusac messages in the page console.</p>
+              <div class="grid gap-1.5">
+                <label class="text-sm font-bold text-slate-800" for="target-origin" data-i18n="targetOrigin">Target origin</label>
+                <input class="field-control" id="target-origin" name="targetOrigin" type="url" placeholder="https://dev.ubu.ac.th">
+                <p class="text-xs font-light leading-4 text-slate-500" data-i18n="targetHint">The page hook can only run on sites allowed by the extension manifest.</p>
+              </div>
+
+              <div class="two-up grid gap-2.5">
+                <div class="grid gap-1.5">
+                  <label class="text-sm font-bold text-slate-800" for="scan-interval-ms" data-i18n="scanEvery">Scan every</label>
+                  <input class="field-control" id="scan-interval-ms" name="scanIntervalMs" type="number" step="1" min="50">
+                  <p class="text-xs font-light leading-4 text-slate-500" data-i18n="milliseconds">Milliseconds</p>
+                </div>
+                <div class="grid gap-1.5">
+                  <label class="text-sm font-bold text-slate-800" for="scan-timeout-ms" data-i18n="giveUpAfter">Give up after</label>
+                  <input class="field-control" id="scan-timeout-ms" name="scanTimeoutMs" type="number" step="1" min="500">
+                  <p class="text-xs font-light leading-4 text-slate-500" data-i18n="milliseconds">Milliseconds</p>
+                </div>
+              </div>
+
+              <label class="group flex cursor-pointer gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 transition hover:border-blue-200 hover:bg-blue-50/70" for="debug-logs">
+                <input class="mt-1 h-4 w-4 shrink-0 accent-blue-700" id="debug-logs" name="debugLogs" type="checkbox">
+                <span class="min-w-0">
+                  <strong class="block text-sm font-extrabold leading-5 text-slate-950" data-i18n="debugTitle">Debug logs</strong>
+                  <span class="mt-1 block text-[13px] font-light leading-5 text-slate-600" data-i18n="debugCopy">Show useful flux-ubusac messages in the page console.</span>
                 </span>
               </label>
 
-              <label class="toggle" for="manual-fallback-enabled">
-                <input id="manual-fallback-enabled" name="manualFallbackEnabled" type="checkbox">
-                <span>
-                  <strong data-i18n="fallbackTitle">Manual fallback</strong>
-                  <p data-i18n="fallbackCopy">Use your fallback coordinates only when automatic detection fails.</p>
+              <label class="group flex cursor-pointer gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 transition hover:border-blue-200 hover:bg-blue-50/70" for="manual-fallback-enabled">
+                <input class="mt-1 h-4 w-4 shrink-0 accent-blue-700" id="manual-fallback-enabled" name="manualFallbackEnabled" type="checkbox">
+                <span class="min-w-0">
+                  <strong class="block text-sm font-extrabold leading-5 text-slate-950" data-i18n="fallbackTitle">Manual fallback</strong>
+                  <span class="mt-1 block text-[13px] font-light leading-5 text-slate-600" data-i18n="fallbackCopy">Use your fallback coordinates only when automatic detection fails.</span>
                 </span>
               </label>
 
-              <div class="two-up">
-                <div class="field">
-                  <label for="manual-latitude" data-i18n="fallbackLat">Fallback latitude</label>
-                  <input id="manual-latitude" name="manualLatitude" type="number" step="any" placeholder="15.123456">
+              <div class="two-up grid gap-2.5">
+                <div class="grid gap-1.5">
+                  <label class="text-sm font-bold text-slate-800" for="manual-latitude" data-i18n="fallbackLat">Fallback latitude</label>
+                  <input class="field-control" id="manual-latitude" name="manualLatitude" type="number" step="any" placeholder="15.123456">
                 </div>
-                <div class="field">
-                  <label for="manual-longitude" data-i18n="fallbackLng">Fallback longitude</label>
-                  <input id="manual-longitude" name="manualLongitude" type="number" step="any" placeholder="104.123456">
+                <div class="grid gap-1.5">
+                  <label class="text-sm font-bold text-slate-800" for="manual-longitude" data-i18n="fallbackLng">Fallback longitude</label>
+                  <input class="field-control" id="manual-longitude" name="manualLongitude" type="number" step="any" placeholder="104.123456">
                 </div>
               </div>
 
-              <div class="field">
-                <label for="manual-radius" data-i18n="fallbackRadius">Fallback radius</label>
-                <input id="manual-radius" name="manualRadius" type="number" step="any" min="0" placeholder="50">
-                <p class="hint" data-i18n="meters">Meters</p>
+              <div class="grid gap-1.5">
+                <label class="text-sm font-bold text-slate-800" for="manual-radius" data-i18n="fallbackRadius">Fallback radius</label>
+                <input class="field-control" id="manual-radius" name="manualRadius" type="number" step="any" min="0" placeholder="50">
+                <p class="text-xs font-light leading-4 text-slate-500" data-i18n="meters">Meters</p>
               </div>
             </div>
           </details>
 
-          <div class="actions">
-            <button class="primary" type="submit" data-i18n="saveChanges">Save changes</button>
-            <button class="danger" type="button" id="reset-defaults" data-i18n="restoreDefaults">Restore defaults</button>
+          <div class="actions-grid grid grid-cols-2 gap-2.5 pt-3">
+            <button class="min-h-11 rounded-2xl bg-gradient-to-br from-blue-700 to-blue-950 px-3 text-sm font-extrabold text-white shadow-[0_12px_24px_rgba(29,78,216,0.24)] transition hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0" type="submit" data-i18n="saveChanges">Save changes</button>
+            <button class="min-h-11 rounded-2xl bg-red-50 px-3 text-sm font-extrabold text-red-700 transition hover:-translate-y-0.5 hover:bg-red-100 active:translate-y-0" type="button" id="reset-defaults" data-i18n="restoreDefaults">Restore defaults</button>
           </div>
 
           <p id="status" role="status" aria-live="polite"></p>
         </form>
 
-        <section class="card">
-          <div class="section-head">
+        <section class="rounded-[1.5rem] border border-white/75 bg-white/90 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.08)] backdrop-blur">
+          <div class="mb-3 flex items-start justify-between gap-3">
             <div>
-              <h2 data-i18n="statusTitle">Live status</h2>
-              <p class="section-copy" data-i18n="statusCopy">Latest message from the page hook.</p>
+              <h2 class="text-lg font-extrabold leading-tight tracking-[-0.03em] text-slate-950" data-i18n="statusTitle">Live status</h2>
+              <p class="mt-1 text-[13px] font-light leading-5 text-slate-500" data-i18n="statusCopy">Latest message from the page hook.</p>
             </div>
           </div>
 
-          <div class="status-grid" id="status-grid">
-            <div class="status-item">
-              <span class="status-label" data-i18n="stateLabel">State</span>
-              <div class="status-value" id="runtime-phase">Waiting</div>
+          <div class="status-grid grid grid-cols-2 gap-2.5" id="status-grid">
+            <div class="min-w-0 rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3">
+              <span class="block text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500" data-i18n="stateLabel">State</span>
+              <div class="mt-1 break-words text-sm font-extrabold text-slate-950" id="runtime-phase">Waiting</div>
             </div>
-            <div class="status-item">
-              <span class="status-label" data-i18n="sourceLabel">Source</span>
-              <div class="status-value" id="runtime-source">-</div>
+            <div class="min-w-0 rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3">
+              <span class="block text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500" data-i18n="sourceLabel">Source</span>
+              <div class="mt-1 break-words text-sm font-extrabold text-slate-950" id="runtime-source">-</div>
             </div>
-            <div class="status-item">
-              <span class="status-label" data-i18n="targetLabel">Target</span>
-              <div class="status-value" id="runtime-target-origin">-</div>
+            <div class="min-w-0 rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3">
+              <span class="block text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500" data-i18n="targetLabel">Target</span>
+              <div class="mt-1 break-words text-sm font-extrabold text-slate-950" id="runtime-target-origin">-</div>
             </div>
-            <div class="status-item">
-              <span class="status-label" data-i18n="pageLabel">Page</span>
-              <div class="status-value" id="runtime-page-origin">-</div>
+            <div class="min-w-0 rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3">
+              <span class="block text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500" data-i18n="pageLabel">Page</span>
+              <div class="mt-1 break-words text-sm font-extrabold text-slate-950" id="runtime-page-origin">-</div>
             </div>
-            <div class="status-item">
-              <span class="status-label" data-i18n="coordsLabel">Coordinates</span>
-              <div class="status-value" id="runtime-coordinates">-</div>
+            <div class="min-w-0 rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3">
+              <span class="block text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500" data-i18n="coordsLabel">Coordinates</span>
+              <div class="mt-1 break-words text-sm font-extrabold text-slate-950" id="runtime-coordinates">-</div>
             </div>
-            <div class="status-item">
-              <span class="status-label" data-i18n="updatedLabel">Updated</span>
-              <div class="status-value" id="runtime-updated-at">-</div>
+            <div class="min-w-0 rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3">
+              <span class="block text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500" data-i18n="updatedLabel">Updated</span>
+              <div class="mt-1 break-words text-sm font-extrabold text-slate-950" id="runtime-updated-at">-</div>
             </div>
           </div>
 
-          <div class="status-message" id="runtime-message" data-i18n="noStatus">No active page status yet.</div>
+          <div class="mt-3 rounded-2xl border border-blue-100 bg-blue-50 px-3 py-2.5 text-sm font-bold leading-5 text-blue-950" id="runtime-message" data-i18n="noStatus">No active page status yet.</div>
         </section>
 
-        <section class="card">
-          <div class="section-head">
-            <div>
-              <h2 data-i18n="backupTitle">Backup settings</h2>
-              <p class="section-copy" data-i18n="backupCopy">Export or apply settings as JSON.</p>
+        <details class="panel-details overflow-hidden rounded-[1.5rem] border border-white/75 bg-white/90 shadow-[0_12px_30px_rgba(15,23,42,0.08)] backdrop-blur">
+          <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 text-lg font-extrabold leading-tight tracking-[-0.03em] text-slate-950 outline-none transition focus-visible:ring-4 focus-visible:ring-blue-100"><span data-i18n="backupTitle">Backup settings</span></summary>
+          <div class="grid gap-3 border-t border-slate-200 p-4 pt-3">
+            <p class="text-[13px] font-light leading-5 text-slate-500" data-i18n="backupCopy">Export or apply settings as JSON.</p>
+            <div class="grid gap-1.5">
+              <label class="text-sm font-bold text-slate-800" for="settings-json" data-i18n="settingsJson">Settings JSON</label>
+              <textarea class="field-control min-h-28 resize-y py-3" id="settings-json" spellcheck="false"></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 gap-2.5">
+              <button class="min-h-11 rounded-2xl bg-blue-50 px-3 text-sm font-extrabold text-blue-900 transition hover:-translate-y-0.5 hover:bg-blue-100 active:translate-y-0" type="button" id="export-settings" data-i18n="exportJson">Export to JSON</button>
+              <button class="min-h-11 rounded-2xl bg-blue-50 px-3 text-sm font-extrabold text-blue-900 transition hover:-translate-y-0.5 hover:bg-blue-100 active:translate-y-0" type="button" id="import-settings" data-i18n="applyJson">Apply JSON settings</button>
             </div>
           </div>
-
-          <div class="field">
-            <label for="settings-json" data-i18n="settingsJson">Settings JSON</label>
-            <textarea id="settings-json" spellcheck="false"></textarea>
-          </div>
-
-          <div class="actions single">
-            <button class="secondary" type="button" id="export-settings" data-i18n="exportJson">Export to JSON</button>
-            <button class="secondary" type="button" id="import-settings" data-i18n="applyJson">Apply JSON settings</button>
-          </div>
-        </section>
+        </details>
       </div>
     </main>
 
