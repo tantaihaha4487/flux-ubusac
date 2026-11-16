@@ -1,47 +1,29 @@
-# flux-ubusac-console
+# Console tools
 
-Standalone browser-console version of the `flux-ubusac` geolocation hook.
+## Existing registration map
 
-## Use
+1. Open the UBU `/regisprompt/register/?rand=…` page and wait for its activity and map to load.
+2. Open DevTools → Console.
+3. Paste all of [`regisprompt-location.js`](regisprompt-location.js), then press Enter.
 
-1. Open a page on the target site:
+This helper reads the current activity center and radius, stops the previous watch and starts tracking again. It selects one random point inside the radius with the same `sqrt(random) * radius` spherical sampler used by the extensions. Subsequent GPS callbacks reuse that point. Accuracy is picked once from 1–10 m; zero is excluded because the current page ignores it.
 
-```text
-https://dev.ubu.ac.th/
-```
+To use the activity center instead, change `randomLocationInRange: true` to `false` before pasting. Running the helper again samples a new point and restores the previous helper first.
 
-2. Open browser Developer Tools.
-3. Open the `Console` tab.
-4. Paste the full contents of `flux-ubusac-console.js` into the console.
-5. Press `Enter`.
-
-The script applies once per page load. If you paste it again on the same page, it prints:
-
-```text
-[flux-ubusac] console hook already applied
-```
-
-## Test
-
-Run this in the same console after applying the script:
+Remove the helper with:
 
 ```js
-navigator.geolocation.getCurrentPosition(console.log)
+window.fluxRegispromptLocation.restore()
 ```
 
-Expected coordinates:
+Reload afterward to request real GPS again. Reload before switching between hook variants. This helper does not submit registration or interact with consent/login controls.
 
-```json
-{
-  "latitude": 15.114926007239427,
-  "longitude": 104.90221112966539
-}
-```
+## General page hook
 
-Only integer `coords.accuracy` is randomized. Latitude and longitude are not jittered.
+[`flux-ubusac-console.js`](flux-ubusac-console.js) scans Nuxt/Vue state and coordinate logs for the target activity. Paste the whole file on `https://dev.ubu.ac.th/`. It applies once per page load and restarts an existing registration-page native GPS watch when it discovers the target.
 
-## Behavior
+The same area sampler and default 1–10 m accuracy range apply. Configure `randomLocationInRange` near the top of the file to disable sampling. Reload the page to remove this general hook.
 
-The script overrides `navigator.geolocation.getCurrentPosition`, `navigator.geolocation.watchPosition`, and `navigator.geolocation.clearWatch` in the page context.
+## Validation
 
-It also watches `console.debug`, `console.info`, `console.log`, and `console.warn` output for coordinates. The first logged `lat,lng` pair or object containing `lat` and `lng` locks the fake position for the rest of the page load.
+Run `node tests/geolocation.cjs` from the repository root. These checks simulate the browser and page GPS lifecycle; they do not submit a real registration.

@@ -26,6 +26,10 @@ jobs:
           node --check firefox/sidebar.js
           node --check firefox/settings.js
           node --check console/flux-ubusac-console.js
+          node --check console/regisprompt-location.js
+
+      - name: Test geolocation behavior
+        run: node tests/geolocation.cjs
 
       - name: Validate manifests
         run: |

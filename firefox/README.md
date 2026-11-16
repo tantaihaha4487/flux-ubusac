@@ -32,7 +32,9 @@ The old options page still exists as a quick fallback for accuracy range only.
 
 The sidebar bundles Kanit locally in `fonts/`, so the panel uses it even when the system font is missing. The UI uses Kanit 200 for the header title and Kanit 300 for supporting text to keep the panel readable.
 
-Accuracy is picked once per page-hook run. Latitude/longitude is always picked once inside the received radius when a valid radius is available. Later geolocation calls reuse the same values.
+Accuracy defaults to an integer from 1–10 m, picked once per page-hook run. Stored zero values are clamped to 1 because the current page ignores zero accuracy. When randomization is enabled and a valid radius is available, latitude/longitude is picked once using a random bearing and `sqrt(random) * radius`, distributed across the circle area. Disabling randomization uses the center. Later geolocation calls reuse the same values. Reload after changing settings.
+
+If the registration page has already started a native GPS watch, the hook restarts that watch after selecting its position so the map and form receive the new coordinates. It does not submit registration.
 
 ## Load Temporarily
 

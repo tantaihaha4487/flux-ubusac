@@ -2,7 +2,7 @@
   "use strict";
 
   const defaults = Object.freeze({
-    accuracyMin: 0,
+    accuracyMin: 1,
     accuracyMax: 10,
     randomLocationInRange: true,
     targetOrigin: "https://dev.ubu.ac.th",
@@ -88,8 +88,8 @@
   function normalizeConfig(input) {
     const source = input || {};
     const config = {
-      accuracyMin: toInt(source.accuracyMin, defaults.accuracyMin, 0),
-      accuracyMax: toInt(source.accuracyMax, defaults.accuracyMax, 0),
+      accuracyMin: toInt(source.accuracyMin, defaults.accuracyMin, 1),
+      accuracyMax: toInt(source.accuracyMax, defaults.accuracyMax, 1),
       randomLocationInRange: toBool(source.randomLocationInRange, defaults.randomLocationInRange),
       targetOrigin: normalizeOrigin(source.targetOrigin),
       scanIntervalMs: toInt(source.scanIntervalMs, defaults.scanIntervalMs, 50),

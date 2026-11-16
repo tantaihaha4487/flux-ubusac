@@ -19,6 +19,16 @@ The generated archives are not committed to the repository. Download them from t
 
 The sidebar panels bundle Kanit locally and use Kanit 200 for the title plus Kanit 300 for supporting text so the header stays readable.
 
+## Registration page already open
+
+For a map that already shows the original GPS location, use [`console/regisprompt-location.js`](console/regisprompt-location.js). Wait for the activity and map to load, then paste the whole file into DevTools Console. It reads the current activity coordinates and radius, stops the previous GPS watch, and restarts tracking with the selected position. It does not submit registration.
+
+All variants use the same sampler: a random bearing and `sqrt(random) * radius`, projected over the Earth. This distributes points across the circle's area. The selected latitude, longitude, and accuracy stay fixed during that hook run. Set `randomLocationInRange` to `false` to use the center; extension settings take effect on the next page load. Accuracy defaults to an integer from 1–10 m because the current page ignores zero accuracy.
+
+The dedicated late-injection helper can be removed with `window.fluxRegispromptLocation.restore()`. Reload afterward to request real GPS again. Reload before switching between different hook variants.
+
+Run regression checks with `node tests/geolocation.cjs`.
+
 ## Console Version - Ready to Copy
 
 Open a page on `https://dev.ubu.ac.th/`, open DevTools Console, paste this whole block, then press Enter.
@@ -40,13 +50,14 @@ Open a page on `https://dev.ubu.ac.th/`, open DevTools Console, paste this whole
   const scanIntervalMs = 250;
   const scanTimeoutMs = 10000;
   const config = {
-    accuracyMin: 0,
+    accuracyMin: 1,
     accuracyMax: 10,
     randomLocationInRange: true
   };
 
   const originalConsole = {
     debug: console.debug,
+    error: console.error,
     info: console.info,
     log: console.log,
     warn: console.warn
@@ -64,6 +75,7 @@ Open a page on `https://dev.ubu.ac.th/`, open DevTools Console, paste this whole
   let scanTimer = null;
   let scanStartedAt = 0;
   let watchId = 0;
+  const nativeClearWatch = navigator.geolocation && navigator.geolocation.clearWatch;
   const watchers = new Map();
   const pendingSuccesses = new Set();
   let pendingPageCoords = null;
@@ -319,7 +331,29 @@ Open a page on `https://dev.ubu.ac.th/`, open DevTools Console, paste this whole
 
     flushSuccesses();
     stopScanner();
+    restartPageTracking();
     return true;
+  }
+
+  // A console injection can happen after the page has started a native watch.
+  // Restart only that active page watch; early injections use the normal startup.
+  function restartPageTracking() {
+    const root = document.getElementById("__nuxt");
+    const stack = [window.$nuxt, root && root.__vue__];
+    const seen = new WeakSet();
+    const rand = getRand();
+    while (stack.length) {
+      const current = stack.pop();
+      if (!current || typeof current !== "object" || seen.has(current)) continue;
+      seen.add(current);
+      if (Array.isArray(current.$children)) stack.push(...current.$children);
+      if (rand && current.rand === rand && current.watchID != null &&
+          !watchers.has(current.watchID) && typeof current.todo === "function" &&
+          typeof current.stopGpsTracking === "function") {
+        current.todo();
+        return;
+      }
+    }
   }
 
   function findTargetInValue(value) {
@@ -479,7 +513,7 @@ Open a page on `https://dev.ubu.ac.th/`, open DevTools Console, paste this whole
         watchPosition: {
           configurable: true,
           value: function (success) {
-            const id = ++watchId;
+            const id = --watchId;
             watchers.set(id, success);
             callSuccess(success);
             return id;
@@ -488,7 +522,9 @@ Open a page on `https://dev.ubu.ac.th/`, open DevTools Console, paste this whole
         clearWatch: {
           configurable: true,
           value: function (id) {
-            watchers.delete(id);
+            if (!watchers.delete(id) && typeof nativeClearWatch === "function") {
+              nativeClearWatch.call(navigator.geolocation, id);
+            }
           }
         }
       });
@@ -566,5 +602,4 @@ Open a page on `https://dev.ubu.ac.th/`, open DevTools Console, paste this whole
   overrideGeolocation();
   startScanner();
 }());
-
 ```

@@ -3,7 +3,7 @@
 
   const stateKey = "__fluxUbusacContentApplied";
   const defaultConfig = {
-    accuracyMin: 0,
+    accuracyMin: 1,
     accuracyMax: 10,
     randomLocationInRange: true,
     targetOrigin: "https://dev.ubu.ac.th",

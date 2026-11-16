@@ -14,13 +14,14 @@
   const scanIntervalMs = 250;
   const scanTimeoutMs = 10000;
   const config = {
-    accuracyMin: 0,
+    accuracyMin: 1,
     accuracyMax: 10,
     randomLocationInRange: true
   };
 
   const originalConsole = {
     debug: console.debug,
+    error: console.error,
     info: console.info,
     log: console.log,
     warn: console.warn
@@ -38,6 +39,7 @@
   let scanTimer = null;
   let scanStartedAt = 0;
   let watchId = 0;
+  const nativeClearWatch = navigator.geolocation && navigator.geolocation.clearWatch;
   const watchers = new Map();
   const pendingSuccesses = new Set();
   let pendingPageCoords = null;
@@ -293,7 +295,29 @@
 
     flushSuccesses();
     stopScanner();
+    restartPageTracking();
     return true;
+  }
+
+  // A console injection can happen after the page has started a native watch.
+  // Restart only that active page watch; early injections use the normal startup.
+  function restartPageTracking() {
+    const root = document.getElementById("__nuxt");
+    const stack = [window.$nuxt, root && root.__vue__];
+    const seen = new WeakSet();
+    const rand = getRand();
+    while (stack.length) {
+      const current = stack.pop();
+      if (!current || typeof current !== "object" || seen.has(current)) continue;
+      seen.add(current);
+      if (Array.isArray(current.$children)) stack.push(...current.$children);
+      if (rand && current.rand === rand && current.watchID != null &&
+          !watchers.has(current.watchID) && typeof current.todo === "function" &&
+          typeof current.stopGpsTracking === "function") {
+        current.todo();
+        return;
+      }
+    }
   }
 
   function findTargetInValue(value) {
@@ -453,7 +477,7 @@
         watchPosition: {
           configurable: true,
           value: function (success) {
-            const id = ++watchId;
+            const id = --watchId;
             watchers.set(id, success);
             callSuccess(success);
             return id;
@@ -462,7 +486,9 @@
         clearWatch: {
           configurable: true,
           value: function (id) {
-            watchers.delete(id);
+            if (!watchers.delete(id) && typeof nativeClearWatch === "function") {
+              nativeClearWatch.call(navigator.geolocation, id);
+            }
           }
         }
       });
